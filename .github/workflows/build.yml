@@ -13,8 +13,19 @@ jobs:
       - name: Unzip project
         run: unzip -q PickLauncher.zip
 
-      - name: Fix compile error
-        run: sed -i 's/2 \* 56\.dp + 6\.dp/118.dp/' PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
+      - name: Apply updated MainActivity.kt
+        run: |
+          f=$(ls MainActivity*.kt 2>/dev/null | head -n 1 || true)
+          if [ -n "$f" ]; then
+            echo "Using $f"
+            cp "$f" PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
+            if ! grep -q REQUEST_DELETE_PACKAGES PickLauncher/app/src/main/AndroidManifest.xml; then
+              sed -i 's#<queries>#<uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />\n    <queries>#' PickLauncher/app/src/main/AndroidManifest.xml
+            fi
+          else
+            echo "No MainActivity*.kt in repo root, using the one in the zip"
+            sed -i 's/2 \* 56\.dp + 6\.dp/118.dp/' PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
+          fi
 
       - uses: actions/setup-java@v4
         with:
