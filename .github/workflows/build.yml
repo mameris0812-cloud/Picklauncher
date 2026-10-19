@@ -13,6 +13,9 @@ jobs:
       - name: Unzip project
         run: unzip -q PickLauncher.zip
 
+      - name: Fix compile error
+        run: sed -i 's/2 \* 56\.dp + 6\.dp/118.dp/' PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
