@@ -9,21 +9,27 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Unzip project
         run: unzip -q PickLauncher.zip
 
-      - name: Apply updated MainActivity.kt
+      - name: Apply latest uploaded MainActivity
         run: |
-          f=$(ls MainActivity*.kt 2>/dev/null | head -n 1 || true)
+          # 저장소에 가장 최근에 올라온 MainActivity*.kt 를 사용 (이름이 (1) 등으로 바뀌어도 OK)
+          f=""
+          while IFS= read -r name; do
+            if [ -n "$name" ] && [ -f "$name" ]; then f="$name"; break; fi
+          done < <(git log --name-only --diff-filter=AM --format= -- 'MainActivity*.kt')
           if [ -n "$f" ]; then
-            echo "Using $f"
+            echo "Using: $f"
             cp "$f" PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
             if ! grep -q REQUEST_DELETE_PACKAGES PickLauncher/app/src/main/AndroidManifest.xml; then
               sed -i 's#<queries>#<uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />\n    <queries>#' PickLauncher/app/src/main/AndroidManifest.xml
             fi
           else
-            echo "No MainActivity*.kt in repo root, using the one in the zip"
+            echo "No MainActivity*.kt in repo, using the one inside the zip"
             sed -i 's/2 \* 56\.dp + 6\.dp/118.dp/' PickLauncher/app/src/main/java/com/example/picklauncher/MainActivity.kt
           fi
 
